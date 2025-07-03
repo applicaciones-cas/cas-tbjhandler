@@ -22,7 +22,7 @@ public class TBJTransactionTest {
     private GRiderCAS poInstance;
     public static void main(String args[]){
         try {
-            System.setProperty("sys.default.path.config", "D:/GGC_Java_Systems");
+            System.setProperty("sys.default.path.config", "D:/GGC_Maven_Systems");
             
             //Test the different object initialization
             //GRiderCAS instance = new GRiderCAS();
