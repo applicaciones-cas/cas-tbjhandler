@@ -4,6 +4,7 @@
  */
 package org.guanzon.cas.tbjhandler.test;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import javax.script.ScriptException;
@@ -73,7 +74,7 @@ public class TBJTransactionTest {
             else{
                 System.out.println(jsonmaster.toJSONString());
             }
-        } catch (SQLException | GuanzonException | ScriptException ex) {
+        } catch (SQLException | GuanzonException | ScriptException | IOException ex) {
             ex.printStackTrace();
         }
     }
