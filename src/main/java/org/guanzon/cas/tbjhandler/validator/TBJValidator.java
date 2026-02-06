@@ -1,0 +1,176 @@
+package org.guanzon.cas.tbjhandler.validator;
+
+import java.util.ArrayList;
+import org.guanzon.appdriver.base.GRiderCAS;
+import org.guanzon.appdriver.iface.GValidator;
+import org.guanzon.cas.tbjhandler.Model.Model_TBJ_Detail;
+import org.guanzon.cas.tbjhandler.Model.Model_TBJ_Master;
+import org.guanzon.cas.tbjhandler.constant.TBJ_Constant;
+import org.json.simple.JSONObject;
+
+/**
+ * TBJValidator ------------------------------------------------------------
+ * Handles validation logic for Transaction Book Journal (TBJ) transactions.
+ * Ensures that master and detail records meet required criteria before saving,
+ * confirming, or processing other transaction states.
+ * 
+ * Supported transaction statuses include OPEN, CONFIRMED, PAID, CANCELLED, VOID,
+ * POSTED, and RETURNED. Validation rules may differ per status.
+ * 
+ * @author Teejei
+ * @since 2026-02-06
+ */
+public class TBJValidator implements GValidator {
+
+    private GRiderCAS poGrider;
+    private String psTranStat;
+    private JSONObject poJSON;
+
+    private Model_TBJ_Master poMaster;
+    private ArrayList<Model_TBJ_Detail> poDetail = new ArrayList<>();
+
+    /**
+     * Sets the application driver for validation.
+     * 
+     * @param applicationDriver instance of GRiderCAS
+     */
+    @Override
+    public void setApplicationDriver(Object applicationDriver) {
+        poGrider = (GRiderCAS) applicationDriver;
+    }
+
+    /**
+     * Sets the transaction status that will determine which validation rules to apply.
+     * 
+     * @param transactionStatus transaction status (OPEN, CONFIRMED, PAID, etc.)
+     */
+    @Override
+    public void setTransactionStatus(String transactionStatus) {
+        psTranStat = transactionStatus;
+    }
+
+    /**
+     * Sets the master record that will be validated.
+     * 
+     * @param value master record object of type Model_TBJ_Master
+     */
+    @Override
+    public void setMaster(Object value) {
+        poMaster = (Model_TBJ_Master) value;
+    }
+
+    /**
+     * Sets the detail records that will be validated.
+     * 
+     * @param value ArrayList of detail objects of type Model_TBJ_Detail
+     */
+    @Override
+    public void setDetail(ArrayList<Object> value) {
+        poDetail.clear();
+        for (Object obj : value) {
+            poDetail.add((Model_TBJ_Detail) obj);
+        }
+    }
+
+    /**
+     * Sets additional data objects that may be required for validation.
+     * Currently not supported.
+     * 
+     * @param value ArrayList of additional objects
+     * @throws UnsupportedOperationException always, as this feature is not implemented
+     */
+    @Override
+    public void setOthers(ArrayList<Object> value) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    /**
+     * Performs validation based on the current transaction status.
+     * Delegates to specific private validation methods.
+     * 
+     * @return JSONObject containing validation result ("success" or "error") and message if applicable
+     */
+    @Override
+    public JSONObject validate() {
+        switch (psTranStat) {
+            case TBJ_Constant.OPEN:
+                return validateNew();
+            case TBJ_Constant.CONFIRMED:
+                return validateConfirmed();
+            case TBJ_Constant.VOID:
+                return validateNew();
+            default:
+                poJSON = new JSONObject();
+                poJSON.put("result", "success");
+        }
+        return poJSON;
+    }
+
+    /**
+     * Validates a new (OPEN) transaction.
+     * Ensures that required master fields are filled and at least one detail account exists.
+     * 
+     * @return JSONObject containing validation result and message if validation fails
+     */
+    private JSONObject validateNew() {
+        poJSON = new JSONObject();
+
+        if (poMaster.getSourceCode() == null || poMaster.getSourceCode().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Source Code is not set.");
+            return poJSON;
+        }
+
+        if (poMaster.getIndustryID() == null || poMaster.getIndustryID().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Industry is not set! Please contact MIS Department!");
+            return poJSON;
+        }
+
+        if (poMaster.getCategoryID() == null || poMaster.getCategoryID().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Category is not set.");
+            return poJSON;
+        }
+
+        int lnDetailCount = 0;
+        for (Model_TBJ_Detail detail : poDetail) {
+            if (detail.getAccountNo() != null && !detail.getAccountNo().isEmpty()) {
+                lnDetailCount++;
+            }
+        }
+
+        if (lnDetailCount == 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "No detail have been set.");
+            return poJSON;
+        }
+
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+
+    /**
+     * Validates a transaction that is being confirmed.
+     * Placeholder for rules specific to CONFIRMED status.
+     * 
+     * @return JSONObject containing validation result
+     */
+    private JSONObject validateConfirmed() {
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+    
+    /**
+     * Validates a transaction that is being void.
+     * Placeholder for rules specific to void status.
+     * 
+     * @return JSONObject containing validation result
+     */
+    private JSONObject validateVoid() {
+        poJSON = new JSONObject();
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+}
