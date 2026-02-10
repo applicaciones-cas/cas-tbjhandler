@@ -7,6 +7,8 @@ package org.guanzon.cas.tbjhandler.test;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.script.ScriptException;
 import org.guanzon.appdriver.base.GRiderCAS;
 import org.guanzon.appdriver.base.GuanzonException;
@@ -29,7 +31,12 @@ public class TBJTransactionTest {
             //GRiderCAS instance = new GRiderCAS();
             //instance.loadEnv("gRider");
             
-            GRiderCAS instancex = new GRiderCAS("gRider");
+            GRiderCAS instancex = null;
+            try {
+                instancex = new GRiderCAS("gRider");
+            } catch (IOException ex) {
+                Logger.getLogger(TBJTransactionTest.class.getName()).log(Level.SEVERE, null, ex);
+            }
             if (!instancex.logUser("gRider", "M001000001")){ 
                 System.err.println(instancex.getMessage());
                 System.exit(1);
@@ -74,8 +81,10 @@ public class TBJTransactionTest {
             else{
                 System.out.println(jsonmaster.toJSONString());
             }
-        } catch (SQLException | GuanzonException | ScriptException | IOException ex) {
+        } catch (SQLException | GuanzonException | ScriptException  ex) {
             ex.printStackTrace();
+        } catch (IOException ex) {
+            Logger.getLogger(TBJTransactionTest.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
