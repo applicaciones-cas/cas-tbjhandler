@@ -92,7 +92,7 @@ public class TBJParameter extends Transaction {
      * @throws CloneNotSupportedException if cloning of model fails
      */
     public JSONObject AddDetail() throws CloneNotSupportedException {
-        if (Detail(getDetailCount() - 1).getTableNm().isEmpty()) {
+        if (Detail(getDetailCount() - 1).getDerivedField().isEmpty()) {
             poJSON = new JSONObject();
             poJSON.put("result", "error");
             poJSON.put("message", "Last row has empty item.");
@@ -175,22 +175,38 @@ public class TBJParameter extends Transaction {
     }
 
     /**
-     * Confirms the current TBJ transaction, changing its status to CONFIRMED.
-     *
+     * Confirms the currently loaded transaction after performing validation and
+     * user authorization checks.
      * <p>
-     * This method validates the transaction, checks user authorization, and
-     * updates the status in the database within a transaction. If successful,
-     * the transaction will be confirmed and a success message is returned.</p>
+     * This method ensures that:
+     * <ul>
+     * <li>A transaction is currently loaded and in READY state.</li>
+     * <li>The transaction has not already been confirmed.</li>
+     * <li>All business rule validations pass.</li>
+     * <li>The user has sufficient authorization level to approve the
+     * confirmation.</li>
+     * </ul>
+     * Once validated, the transaction status is updated to CONFIRMED and the
+     * database transaction is committed. If any step fails, the transaction is
+     * rolled back and an error result is returned.
      *
-     * @param remarks remarks or notes associated with the confirmation
-     * @return JSONObject containing the result of the confirmation operation -
-     * "success" if the transaction is confirmed - "error" if validation fails,
-     * user is not authorized, or database update fails
-     * @throws ParseException if date parsing fails during validation
-     * @throws SQLException if a database error occurs while updating the
-     * transaction status
-     * @throws GuanzonException if business rules prevent confirmation
-     * @throws CloneNotSupportedException if cloning the transaction model fails
+     * @param remarks remarks or notes related to the confirmation of the
+     * transaction
+     * @return JSONObject containing the result of the operation:
+     * <ul>
+     * <li><b>result</b> = "success" if the transaction was successfully
+     * confirmed</li>
+     * <li><b>result</b> = "error" if validation or authorization fails</li>
+     * <li><b>message</b> = descriptive message indicating the outcome</li>
+     * </ul>
+     *
+     * @throws ParseException if an error occurs while parsing date or status
+     * values
+     * @throws SQLException if a database access error occurs during the
+     * transaction process
+     * @throws GuanzonException if a business rule or system-related error
+     * occurs
+     * @throws CloneNotSupportedException if cloning of transaction data fails
      */
     public JSONObject ConfirmTransaction(String remarks)
             throws ParseException, SQLException, GuanzonException, CloneNotSupportedException {
@@ -261,6 +277,38 @@ public class TBJParameter extends Transaction {
 
         return poJSON;
     }
+    /**
+     * Voids the currently loaded transaction after performing validation and
+     * user authorization checks.
+     * <p>
+     * This method verifies that:
+     * <ul>
+     * <li>A transaction is currently loaded and ready for processing.</li>
+     * <li>The transaction has not already been voided.</li>
+     * <li>All business rule validations pass.</li>
+     * <li>The user has sufficient authorization level to approve the void
+     * action.</li>
+     * </ul>
+     * If all conditions are met, the transaction status is updated to VOID and
+     * the database transaction is committed. Otherwise, the operation is rolled
+     * back and an error result is returned.
+     *
+     * @param remarks remarks or reason for voiding the transaction
+     * @return JSONObject containing the result of the operation:
+     * <ul>
+     * <li><b>result</b> = "success" if the transaction was successfully
+     * voided</li>
+     * <li><b>result</b> = "error" if validation or authorization fails</li>
+     * <li><b>message</b> = descriptive message of the operation result</li>
+     * </ul>
+     *
+     * @throws ParseException if an error occurs while parsing date or status
+     * values
+     * @throws SQLException if a database access error occurs during the
+     * transaction
+     * @throws GuanzonException if a business rule or system error occurs
+     * @throws CloneNotSupportedException if cloning of transaction data fails
+     */
     public JSONObject VoidTransaction(String remarks)
             throws ParseException, SQLException, GuanzonException, CloneNotSupportedException {
 
@@ -380,7 +428,8 @@ public class TBJParameter extends Transaction {
      */
     @Override
     public JSONObject save() {
-        return isEntryOkay(TBJ_Constant.OPEN);
+        String Status = Master().getTransactionStatus();
+        return isEntryOkay(Status);
     }
 
     /**
@@ -528,7 +577,7 @@ public class TBJParameter extends Transaction {
         poJSON = object.searchRecord(value, Master().getSourceCode(), false);
 
         if ("success".equals((String) poJSON.get("result"))) {
-            Detail(detailRow).setTableName(object.getModel().getTableNme());
+            Detail(detailRow).setTableNm(object.getModel().getTableNme());
         }
         return poJSON;
     }
@@ -563,8 +612,9 @@ public class TBJParameter extends Transaction {
                 1);
 
         if (poJSON != null) {
-           
-            return openTransaction((String) poJSON.get("sSourceCD"));
+            poJSON = openTransaction((String) poJSON.get("sSourceCD"));
+            Detail(detailRow).setTableNm((String) poJSON.get("sTableNme"));
+            return poJSON;
         } else {
             poJSON = new JSONObject();
             poJSON.put("result", "error");

@@ -98,7 +98,7 @@ public class TBJValidator implements GValidator {
             case TBJ_Constant.CONFIRMED:
                 return validateConfirmed();
             case TBJ_Constant.VOID:
-                return validateNew();
+                return validateVoid();
             default:
                 poJSON = new JSONObject();
                 poJSON.put("result", "success");
@@ -132,19 +132,59 @@ public class TBJValidator implements GValidator {
             poJSON.put("message", "Category is not set.");
             return poJSON;
         }
+        
+       
+        String remarks = poMaster.getRemarks();
 
+        if (remarks == null || remarks.trim().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Remarks is not set.");
+            return poJSON;
+        }
+
+        if (remarks.trim().length() < 10) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Please enter a remarks description with a minimum of 10 characters.");
+            return poJSON;
+        }
+
+        
         int lnDetailCount = 0;
-        for (Model_TBJ_Detail detail : poDetail) {
-            if (detail.getAccountNo() != null && !detail.getAccountNo().isEmpty()) {
+
+        for (int lnCtr = 0; lnCtr < poDetail.size(); lnCtr++) {
+            Model_TBJ_Detail detail = poDetail.get(lnCtr);
+
+            // Check if the entire row is empty
+            boolean isRowEmpty
+                    = (detail.getTableNm()== null || detail.getTableNm().trim().isEmpty())
+                    && (detail.getDerivedField() == null || detail.getDerivedField().trim().isEmpty())
+                    && (detail.getAccountType()== null || detail.getAccountType().trim().isEmpty())
+                    && (detail.getAccountNo()== null || detail.getAccountNo().trim().isEmpty());
+
+            if (!isRowEmpty) {
                 lnDetailCount++;
             }
         }
 
-        if (lnDetailCount == 0) {
+// Special check: only default row exists and it's empty
+        if (poDetail.size() == 1 && lnDetailCount == 0) {
             poJSON.put("result", "error");
-            poJSON.put("message", "No detail have been set.");
+            poJSON.put("message", "Details must have at least one record.");
             return poJSON;
         }
+//        
+//        int lnDetailCount = 0;
+//        for (Model_TBJ_Detail detail : poDetail) {
+//            if (detail.getAccountNo() != null && !detail.getAccountNo().isEmpty()) {
+//                lnDetailCount++;
+//            }
+//        }
+//
+//        if (lnDetailCount == 0) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "No detail have been set.");
+//            return poJSON;
+//        }
 
         poJSON.put("result", "success");
         return poJSON;
@@ -158,6 +198,75 @@ public class TBJValidator implements GValidator {
      */
     private JSONObject validateConfirmed() {
         poJSON = new JSONObject();
+
+        if (poMaster.getSourceCode() == null || poMaster.getSourceCode().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Source Code is not set.");
+            return poJSON;
+        }
+
+        if (poMaster.getIndustryID() == null || poMaster.getIndustryID().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Industry is not set! Please contact MIS Department!");
+            return poJSON;
+        }
+
+        if (poMaster.getCategoryID() == null || poMaster.getCategoryID().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Category is not set.");
+            return poJSON;
+        }
+        
+       
+        String remarks = poMaster.getRemarks();
+
+        if (remarks == null || remarks.trim().isEmpty()) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Remarks is not set.");
+            return poJSON;
+        }
+
+        if (remarks.trim().length() < 10) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Please enter a remarks description with a minimum of 10 characters.");
+            return poJSON;
+        }
+
+        
+        int lnDetailCount = 0;
+
+        for (int lnCtr = 0; lnCtr < poDetail.size(); lnCtr++) {
+            Model_TBJ_Detail detail = poDetail.get(lnCtr);
+
+            // Check if the entire row is empty
+            boolean isRowEmpty
+                    = (detail.isActive() == false);
+
+            if (!isRowEmpty) {
+                lnDetailCount++;
+            }
+        }
+
+// Special check: only default row exists and it's empty
+        if (poDetail.size() == 1 && lnDetailCount == 0) {
+            poJSON.put("result", "error");
+            poJSON.put("message", "Details must have at least one record active.");
+            return poJSON;
+        }
+//        
+//        int lnDetailCount = 0;
+//        for (Model_TBJ_Detail detail : poDetail) {
+//            if (detail.getAccountNo() != null && !detail.getAccountNo().isEmpty()) {
+//                lnDetailCount++;
+//            }
+//        }
+//
+//        if (lnDetailCount == 0) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "No detail have been set.");
+//            return poJSON;
+//        }
+
         poJSON.put("result", "success");
         return poJSON;
     }

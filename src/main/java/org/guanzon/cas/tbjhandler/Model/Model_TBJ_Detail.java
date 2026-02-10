@@ -5,6 +5,8 @@ import org.guanzon.appdriver.agent.services.Model;
 import org.guanzon.appdriver.base.GuanzonException;
 import org.guanzon.appdriver.base.MiscUtil;
 import org.guanzon.appdriver.constant.EditMode;
+import org.guanzon.cas.parameter.model.Model_xxxTransactionSourceTable;
+import org.guanzon.cas.parameter.services.ParamModels;
 import org.guanzon.cas.tbjhandler.Services.TBJModels;
 import org.json.simple.JSONObject;
 import ph.com.guanzongroup.cas.cashflow.model.Model_Account_Chart;
@@ -35,6 +37,7 @@ public class Model_TBJ_Detail extends Model {
     private Model_Account_Chart poAccountChart;
     private Model_xxxSysTable poxxxSysTable;
     private Model_xxxSysColumn poxxxSysColumn;
+    private Model_xxxTransactionSourceTable poTransactionSourceTable;
 
     @Override
     public void initialize() {
@@ -62,6 +65,8 @@ public class Model_TBJ_Detail extends Model {
             // Initialize reference objects
             CashflowModels cashFlow = new CashflowModels(poGRider);
             poAccountChart = cashFlow.Account_Chart();
+            ParamModels paramModels = new ParamModels(poGRider);
+            poTransactionSourceTable = paramModels.TransactionSourceTable();
 
             TBJModels tbj = new TBJModels(poGRider);
             poxxxSysTable = tbj.SysTable();
@@ -361,6 +366,34 @@ public class Model_TBJ_Detail extends Model {
         } else {
             poxxxSysColumn.initialize();
             return poxxxSysColumn;
+        }
+    }
+    
+    // --- Account Chart Reference ---
+    /**
+     * Returns the linked account chart object.
+     * Opens or initializes the record if not already loaded.
+     * @return Account chart model
+     * @throws GuanzonException
+     * @throws SQLException
+     */
+    public Model_xxxTransactionSourceTable TransactionSourceTable() throws GuanzonException, SQLException {
+        if (!"".equals((String) getValue("sTableNme"))) {
+            if (poTransactionSourceTable.getEditMode() == EditMode.READY
+                    && poTransactionSourceTable.getSourceCode().equals((String) getValue("sTableNme"))) {
+                return poTransactionSourceTable;
+            } else {
+                poJSON = poTransactionSourceTable.openRecord((String) getValue("sTableNme"));
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poTransactionSourceTable;
+                } else {
+                    poTransactionSourceTable.initialize();
+                    return poTransactionSourceTable;
+                }
+            }
+        } else {
+            poTransactionSourceTable.initialize();
+            return poTransactionSourceTable;
         }
     }
 }
