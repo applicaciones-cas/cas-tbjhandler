@@ -19,9 +19,6 @@ import org.guanzon.cas.parameter.model.Model_xxxTransactionSource;
 import org.guanzon.cas.tbjhandler.constant.TBJ_Constant;
 import org.guanzon.cas.parameter.services.ParamModels;
 import org.json.simple.JSONObject;
-import ph.com.guanzongroup.cas.cashflow.model.Model_Account_Chart;
-import ph.com.guanzongroup.cas.cashflow.services.CashflowModels;
-
 /**
  * Model_TBJ_Master --------------------------------------------------------
  * Handles the master record of the Transaction Book Journal (TBJ).
@@ -57,7 +54,7 @@ public class Model_TBJ_Master extends Model {
             MiscUtil.initRowSet(poEntity);
 
             // Assign default values
-            poEntity.updateString("cRecdStat", TBJ_Constant.OPEN);
+            poEntity.updateString("cTranStat", TBJ_Constant.OPEN);
             poEntity.updateObject("sIndstCde", poGRider.getIndustry());
             poEntity.updateObject("sModified", poGRider.getUserID());
             poEntity.updateObject("dModified", SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
@@ -186,7 +183,7 @@ public class Model_TBJ_Master extends Model {
      * @return JSONObject result
      */
     public JSONObject setTransactionStatus(String transactionStatus) {
-        return setValue("cRecdStat", transactionStatus);
+        return setValue("cTranStat", transactionStatus);
     }
 
     /**
@@ -194,7 +191,7 @@ public class Model_TBJ_Master extends Model {
      * @return Transaction status
      */
     public String getTransactionStatus() {
-        return (String) getValue("cRecdStat");
+        return (String) getValue("cTranStat");
     }
 
     /**

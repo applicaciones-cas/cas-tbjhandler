@@ -13,12 +13,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -62,6 +60,7 @@ import ph.com.guanzongroup.cas.cashflow.services.CashflowControllers;
  * @since 2026-02-05
  * @startDate 2026-02-05
  * @endDate   2026-02-06
+ * @version 1.0
  */
 public class TBJParameter extends Transaction {
 
@@ -249,16 +248,7 @@ public class TBJParameter extends Transaction {
 
         // Begin database transaction
         poGRider.beginTrans("UPDATE STATUS", "ConfirmTransaction", SOURCE_CODE, Master().getTransactionNo());
-
-        poJSON = statusChange(
-                poMaster.getTable(),
-                (String) poMaster.getValue("sTransNox"),
-                remarks,
-                lsStatus,
-                !lbConfirm,
-                true
-        );
-
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sGLTranNo"), remarks, lsStatus, !lbConfirm, true);
         if (!"success".equals((String) poJSON.get("result"))) {
             poGRider.rollbackTrans();
             return poJSON;
@@ -544,12 +534,10 @@ public class TBJParameter extends Transaction {
      */
     public JSONObject SearchSysTable(String value, boolean byCode, int detailRow)
             throws ExceptionInInitializerError, SQLException, GuanzonException {
-
         SysTable object = new TBJControllers(poGRider, logwrapr).SysTable();
         object.setRecordStatus("1");
 
         poJSON = object.searchRecord(value, byCode);
-
         if ("success".equals((String) poJSON.get("result"))) {
             Detail(detailRow).setTableNm(object.getModel().getTableNamex());
             System.out.println("table Name : " + Detail(detailRow).getTableNm());
@@ -570,12 +558,10 @@ public class TBJParameter extends Transaction {
      */
     public JSONObject SearchSourceCodeTable(String value, int detailRow)
             throws ExceptionInInitializerError, SQLException, GuanzonException {
-
         TransactionSourceTable object = new ParamControllers(poGRider, logwrapr).TransactionSourceTable();
         object.setRecordStatus("1");
 
         poJSON = object.searchRecord(value, Master().getSourceCode(), false);
-
         if ("success".equals((String) poJSON.get("result"))) {
             Detail(detailRow).setTableNm(object.getModel().getTableNme());
         }
@@ -600,9 +586,7 @@ public class TBJParameter extends Transaction {
 
         String lsSQL = "SELECT sSourceCD, sTableNme, cTablePri, cTableTyp FROM xxxTransactionSourceTable "
                 + "WHERE sSourceCD LIKE " + SQLUtil.toSQL("%" + Master().getSourceCode());
-
         System.out.print(lsSQL);
-
         poJSON = ShowDialogFX.Browse(poGRider,
                 lsSQL,
                 value,
@@ -635,10 +619,8 @@ public class TBJParameter extends Transaction {
      */
     public JSONObject SearchSysColumn(String value, boolean byCode, int detailRow)
             throws ExceptionInInitializerError, SQLException, GuanzonException {
-
         SysColumn object = new TBJControllers(poGRider, logwrapr).SysColumn();
         object.setRecordStatus("1");
-
         poJSON = object.searchRecord(value, byCode);
 
         if ("success".equals((String) poJSON.get("result"))) {
@@ -662,7 +644,7 @@ public class TBJParameter extends Transaction {
      * <li>a.sIndstCde - Industry code from the master table</li>
      * <li>c.sDescript - Category description from the category table</li>
      * <li>a.sRemarksx - Remarks from the master table</li>
-     * <li>a.cRecdStat - Record status from the master table</li>
+     * <li>a.cTranStat - Record status from the master table</li>
      * </ul>
      *
      * <p>
@@ -679,8 +661,8 @@ public class TBJParameter extends Transaction {
                 + " a.sIndstCde, "
                 + " c.sDescript, "
                 + " a.sRemarksx, "
-                + " a.cRecdStat, "
-                + " CASE a.cRecdStat "
+                + " a.cTranStat, "
+                + " CASE a.cTranStat "
                 + " WHEN '0' THEN 'VOID'" 
                 + " WHEN '1' THEN 'OPEN'" 
                 + " WHEN '2' THEN 'CONFIRMED'" 
@@ -740,9 +722,9 @@ public class TBJParameter extends Transaction {
             for (int lnCtr = 0; lnCtr <= psTranStat.length() - 1; lnCtr++) {
                 lsTransStat += ", " + SQLUtil.toSQL(Character.toString(psTranStat.charAt(lnCtr)));
             }
-            lsTransStat = " a.cRecdStat IN (" + lsTransStat.substring(2) + ")";
+            lsTransStat = " a.cTranStat IN (" + lsTransStat.substring(2) + ")";
         } else {
-            lsTransStat = " a.cRecdStat = " + SQLUtil.toSQL(psTranStat);
+            lsTransStat = " a.cTranStat = " + SQLUtil.toSQL(psTranStat);
         }
         initSQL();
 
@@ -780,7 +762,6 @@ public class TBJParameter extends Transaction {
     /**
      * Displays a modal window for building a computable column formula for a
      * detail row.
-     *
      * <p>
      * This method opens a draggable JavaFX modal where users can select columns
      * from a specified table and apply mathematical operations (+, -, *, /) to
@@ -791,7 +772,6 @@ public class TBJParameter extends Transaction {
      * <li>Two columns consecutively without an operator</li>
      * <li>Ending the formula with an operator</li>
      * </ul>
-     *
      * <p>
      * The modal includes:</p>
      * <ul>
@@ -802,12 +782,10 @@ public class TBJParameter extends Transaction {
      * <li>"Done" button to save the formula to the detail row</li>
      * <li>"Clear" button to reset the formula</li>
      * </ul>
-     *
      * <p>
      * The selected formula is saved into the specified detail row using
      * {@code Detail(detailRow).setDerivedField()} once the user clicks
      * "Done".</p>
-     *
      * @param tableName the name of the table from which computable columns are
      * fetched
      * @param detailRow the index of the detail row where the formula will be
@@ -825,15 +803,12 @@ public class TBJParameter extends Transaction {
         VBox modalRoot = new VBox(15);
         modalRoot.setPadding(new Insets(20));
         modalRoot.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.95);"
-                + // semi-transparent white
-                "-fx-background-radius: 15;"
-                + // rounded corners
-                "-fx-border-radius: 15;"
-                + "-fx-border-color: #cccccc;"
-                + // subtle border
-                "-fx-border-width: 1    ;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 0, 2);" // soft shadow
+                "-fx-background-color: rgba(255, 255, 255, 0.95);" + // semi-transparent white
+                "-fx-background-radius: 15;" + // rounded corners
+                "-fx-border-radius: 15;"+ 
+                "-fx-border-color: #cccccc;"+ // subtle border
+                "-fx-border-width: 1;"+ 
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 0, 2);" // soft shadow
         );
 
         // Variables to track initial mouse position
@@ -946,7 +921,7 @@ public class TBJParameter extends Transaction {
         double btnSizeW = 100;
         double btnSizeH = 40;
 
-// common style
+        // common style
         String buttonStyle
                 = "-fx-font-size: 14px;"
                 + "-fx-font-weight: bold;"
@@ -954,7 +929,7 @@ public class TBJParameter extends Transaction {
                 + "-fx-text-fill: white;"
                 + "-fx-background-radius: 6;";
 
-// apply to both
+        // apply to both
         for (Button btn : new Button[]{btnDone, btnClear}) {
             btn.setMinSize(btnSizeW, btnSizeH);
             btn.setPrefSize(btnSizeW, btnSizeH);
@@ -999,9 +974,16 @@ public class TBJParameter extends Transaction {
         modal.showAndWait();
     }
 
-// Helper class for column info
+    // Helper class for column info
+    /**
+     * Represents metadata for a computable database column.
+     * <p>
+     * This class holds the column's technical name and its user-friendly
+     * description, which are used when building derived field formulas in the
+     * UI.
+     * </p>
+     */
     private static class ColumnInfo {
-
         String name;        // sColumnNm
         String description; // sColumnDs
 
@@ -1014,27 +996,58 @@ public class TBJParameter extends Transaction {
     /**
      * Fetches a list of computable columns for a given table along with their
      * descriptions.
-     *
      * <p>
-     * This method queries the {@code xxxSysColumn} table for columns that are
-     * active (cRecdStat = '1'), of allowed types (nColumnTp IN
-     * 2,3,4,5,-5,6,7,8,12,-1,16), and not excluded (sColumnNm NOT IN
-     * 'nEntryNox').</p>
-     *
+     * This method queries the {@code xxxSysColumn} table for columns that are:
+     * <ul>
+     * <li>Active (cTranStat = '1')</li>
+     * <li>Not excluded (sColumnNm NOT IN ('nEntryNox'))</li>
+     * <li>Of supported data types</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Supported column data types are based on {@link java.sql.Types} and
+     * include:
+     * </p>
+     * <ul>
+     * <li><b>Numeric Types</b>:
+     * <ul>
+     * <li>  2 - NUMERIC</li>
+     * <li>  3 - DECIMAL</li>
+     * <li>  4 - INTEGER</li>
+     * <li>  5 - SMALLINT</li>
+     * <li> -5 - BIGINT</li>
+     * <li>  6 - FLOAT</li>
+     * <li>  7 - REAL</li>
+     * <li>  8 - DOUBLE</li>
+     * </ul>
+     * </li>
+     * <li><b>String Types</b>:
+     * <ul>
+     * <li>12 - VARCHAR</li>
+     * <li>-1 - LONGVARCHAR</li>
+     * </ul>
+     * </li>
+     * <li><b>Boolean Type</b>:
+     * <ul>
+     * <li>16 - BOOLEAN</li>
+     * </ul>
+     * </li>
+     * </ul>
      * <p>
      * If a table name is provided, only columns belonging to that table are
-     * returned.</p>
-     *
+     * returned. If null or empty, columns from all tables are fetched.
+     * </p>
      * @param tableName the name of the table whose computable columns are to be
      * fetched; may be null or empty to fetch columns from all tables
      * @return a list of {@link ColumnInfo} objects containing the column name
      * and description
      * @throws SQLException if a database error occurs while executing the query
      */
+
     private List<ColumnInfo> fetchComputableColumnsWithDesc(String tableName) throws SQLException {
         List<ColumnInfo> columns = new ArrayList<>();
         String sql = "SELECT sColumnNm, sColumnDs FROM xxxSysColumn "
-                + "WHERE cRecdStat = '1' AND nColumnTp IN ('2','3','4','5','-5','6','7','8','12','-1','16')"
+                + "WHERE cTranStat = '1' AND nColumnTp IN ('2','3','4','5','-5','6','7','8','12','-1','16')"
                 + " AND sColumnNm NOT IN ('nEntryNox')";
 
         if (tableName != null && !tableName.isEmpty()) {
@@ -1050,14 +1063,13 @@ public class TBJParameter extends Transaction {
         }
         return columns;
     }
+    
     /**
      * Converts column names in a formula to their human-readable descriptions.
-     *
      * <p>
      * This method takes a formula string (e.g., "colA+colB") and replaces each
      * column name with its corresponding description from the
      * {@code xxxSysColumn} table for the specified detail row's table.</p>
-     *
      * <p>
      * The process works as follows:</p>
      * <ol>
@@ -1068,7 +1080,6 @@ public class TBJParameter extends Transaction {
      * <li>Replace the column names in the formula with their corresponding
      * descriptions.</li>
      * </ol>
-     *
      * @param fieldName the formula containing column names
      * @param detailRow the index of the detail row whose table will be used to
      * resolve column descriptions
@@ -1141,8 +1152,6 @@ public class TBJParameter extends Transaction {
                     entry.getValue()
             );
         }
-
         return formattedFormula;
-    }
-    
+    } 
 }

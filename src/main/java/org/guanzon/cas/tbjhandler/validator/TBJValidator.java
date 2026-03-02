@@ -17,8 +17,11 @@ import org.json.simple.JSONObject;
  * Supported transaction statuses include OPEN, CONFIRMED, PAID, CANCELLED, VOID,
  * POSTED, and RETURNED. Validation rules may differ per status.
  * 
- * @author Teejei
- * @since 2026-02-06
+ * @author Teejei De Celis (mdot223)
+ * @since 2026-02-05
+ * @startDate 2026-02-05
+ * @endDate   2026-02-06
+ * @version 1.0
  */
 public class TBJValidator implements GValidator {
 
@@ -166,25 +169,12 @@ public class TBJValidator implements GValidator {
             }
         }
 
-// Special check: only default row exists and it's empty
+        // Special check: only default row exists and it's empty
         if (poDetail.size() == 1 && lnDetailCount == 0) {
             poJSON.put("result", "error");
             poJSON.put("message", "Details must have at least one record.");
             return poJSON;
         }
-//        
-//        int lnDetailCount = 0;
-//        for (Model_TBJ_Detail detail : poDetail) {
-//            if (detail.getAccountNo() != null && !detail.getAccountNo().isEmpty()) {
-//                lnDetailCount++;
-//            }
-//        }
-//
-//        if (lnDetailCount == 0) {
-//            poJSON.put("result", "error");
-//            poJSON.put("message", "No detail have been set.");
-//            return poJSON;
-//        }
 
         poJSON.put("result", "success");
         return poJSON;
@@ -247,25 +237,12 @@ public class TBJValidator implements GValidator {
             }
         }
 
-// Special check: only default row exists and it's empty
+        // Special check: only default row exists and it's empty
         if (poDetail.size() == 1 && lnDetailCount == 0) {
             poJSON.put("result", "error");
             poJSON.put("message", "Details must have at least one record active.");
             return poJSON;
         }
-//        
-//        int lnDetailCount = 0;
-//        for (Model_TBJ_Detail detail : poDetail) {
-//            if (detail.getAccountNo() != null && !detail.getAccountNo().isEmpty()) {
-//                lnDetailCount++;
-//            }
-//        }
-//
-//        if (lnDetailCount == 0) {
-//            poJSON.put("result", "error");
-//            poJSON.put("message", "No detail have been set.");
-//            return poJSON;
-//        }
 
         poJSON.put("result", "success");
         return poJSON;
