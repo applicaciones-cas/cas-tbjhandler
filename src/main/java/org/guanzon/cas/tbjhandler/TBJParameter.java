@@ -383,6 +383,45 @@ public class TBJParameter extends Transaction {
     @Override
     public JSONObject willSave() throws CloneNotSupportedException, SQLException, GuanzonException {
         poJSON = new JSONObject();
+        
+        for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+
+            // Skip fully empty rows (optional)
+            boolean isRowEmpty
+                    = (Detail(lnCtr).getTableNm() == null || Detail(lnCtr).getTableNm().trim().isEmpty())
+                    && (Detail(lnCtr).getDerivedField() == null || Detail(lnCtr).getDerivedField().trim().isEmpty())
+                    && (Detail(lnCtr).getAccountType() == null || Detail(lnCtr).getAccountType().trim().isEmpty())
+                    && (Detail(lnCtr).getAccountNo() == null || Detail(lnCtr).getAccountNo().trim().isEmpty());
+
+            if (isRowEmpty) {
+                continue; // ignore empty row
+            }
+
+            // Now check required fields
+            if (Detail(lnCtr).getTableNm() == null || Detail(lnCtr).getTableNm().isEmpty()) {
+                poJSON.put("message", "Table Name is required at row " + (lnCtr + 1) + ".");
+                poJSON.put("result", "error");
+                return poJSON;
+            }
+
+            if (Detail(lnCtr).getDerivedField() == null || Detail(lnCtr).getDerivedField().isEmpty()) {
+                poJSON.put("message", "Derived Field is required at row " + (lnCtr + 1) + ".");
+                poJSON.put("result", "error");
+                return poJSON;
+            }
+
+            if (Detail(lnCtr).getAccountType() == null || Detail(lnCtr).getAccountType().isEmpty()) {
+                poJSON.put("message", "Account Type is required at row " + (lnCtr + 1) + ".");
+                poJSON.put("result", "error");
+                return poJSON;
+            }
+
+            if (Detail(lnCtr).getAccountNo() == null || Detail(lnCtr).getAccountNo().isEmpty()) {
+                poJSON.put("message", "Account No is required at row " + (lnCtr + 1) + ".");
+                poJSON.put("result", "error");
+                return poJSON;
+            }
+        }
 
         Iterator<Model> detail = Detail().iterator();
         while (detail.hasNext()) {
@@ -398,6 +437,8 @@ public class TBJParameter extends Transaction {
             Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
             Detail(lnCtr).setEntryNo(lnCtr + 1);
         }
+        
+        
 
         poJSON.put("result", "success");
         return poJSON;
@@ -999,7 +1040,7 @@ public class TBJParameter extends Transaction {
      * <p>
      * This method queries the {@code xxxSysColumn} table for columns that are:
      * <ul>
-     * <li>Active (cTranStat = '1')</li>
+     * <li>Active (cRecdStat = '1')</li>
      * <li>Not excluded (sColumnNm NOT IN ('nEntryNox'))</li>
      * <li>Of supported data types</li>
      * </ul>
@@ -1047,7 +1088,7 @@ public class TBJParameter extends Transaction {
     private List<ColumnInfo> fetchComputableColumnsWithDesc(String tableName) throws SQLException {
         List<ColumnInfo> columns = new ArrayList<>();
         String sql = "SELECT sColumnNm, sColumnDs FROM xxxSysColumn "
-                + "WHERE cTranStat = '1' AND nColumnTp IN ('2','3','4','5','-5','6','7','8','12','-1','16')"
+                + "WHERE cRecdStat = '1' AND nColumnTp IN ('2','3','4','5','-5','6','7','8','12','-1','16')"
                 + " AND sColumnNm NOT IN ('nEntryNox')";
 
         if (tableName != null && !tableName.isEmpty()) {
