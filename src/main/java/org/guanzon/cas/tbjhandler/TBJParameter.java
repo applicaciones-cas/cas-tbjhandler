@@ -421,6 +421,7 @@ public class TBJParameter extends Transaction {
                 poJSON.put("result", "error");
                 return poJSON;
             }
+            
         }
 
         Iterator<Model> detail = Detail().iterator();
@@ -438,10 +439,85 @@ public class TBJParameter extends Transaction {
             Detail(lnCtr).setEntryNo(lnCtr + 1);
         }
         
+        poJSON = checkDuplicate(Master().getSourceCode(), 
+                                Master().getIndustryID(), 
+                                Master().getCategoryID());
         
-
+        if (!"success".equals((String) poJSON.get("result"))) {
+            return poJSON;
+        }
+        
         poJSON.put("result", "success");
         return poJSON;
+        }
+    /**
+     * Checks if a record with the specified combination of sSourceCD, sIndstCde, 
+     * and sCategrCd already exists in the TBJ_Master table.
+     * <p>
+     * This method executes a SELECT query on the TBJ_Master table to determine 
+     * whether a row with the same source code, industry code, and category code 
+     * exists. If a duplicate is found, it returns a JSONObject with an "error" 
+     * result and includes the transaction number (sGLTranNo) of the existing record.
+     * If no duplicate is found, it returns a "success" result.
+     * </p>
+     *
+     * <p>
+     * ADDED this validation as requested to display if already exist before saving 
+     * by the tester (sent via Viber by maam she)
+     * </p>
+     * <ul>
+     *     <li>ADDED BY: TEEJEI</li>
+     *     <li>DATE ADDED: March 06, 2026</li>
+     *     <li>TIME: 11:33:56 AM</li>
+     * </ul>
+     *
+     * <pre>
+     * Example usage:
+     * JSONObject response = checkDuplicate("SRC001", "IND123", "CAT001");
+     * if (response.getString("result").equals("error")) {
+     *     System.out.println(response.getString("message"));
+     * } else {
+     *     System.out.println("No duplicates found.");
+     * }
+     * </pre>
+     *
+     * @param sSourceCD  the source code to check for duplicates (cannot be null)
+     * @param sIndstCde  the industry code to check for duplicates (cannot be null)
+     * @param sCategrCd  the category code to check for duplicates (cannot be null)
+     * @return JSONObject a JSON object containing:
+     *         <ul>
+     *             <li>"result" - "error" if a duplicate exists, "success" if no duplicate</li>
+     *             <li>"message" - user-friendly message including transaction number if duplicate</li>
+     *         </ul>
+     * @throws SQLException if a database access error occurs while executing the query
+     */
+     public JSONObject checkDuplicate(String sSourceCD, String sIndstCde, String sCategrCd) throws SQLException {
+        JSONObject poJSON = new JSONObject();
+         
+        String lsSQL = " SELECT "
+                + " sGLTranNo," 
+                + " sSourceCD, " 
+                + " sIndstCde, " 
+                + " sCategrCd  " 
+                + " FROM TBJ_Master " 
+                + " WHERE sSourceCD = " + SQLUtil.toSQL(sSourceCD)
+                + " AND sIndstCde = " +  SQLUtil.toSQL(sIndstCde)
+                + " AND sCategrCd = " + SQLUtil.toSQL(sCategrCd);
+        
+         System.out.println("SQL EXECUTED: " + lsSQL);
+         ResultSet rs = poGRider.executeQuery(lsSQL);
+         if (rs.next()) {
+            String tranNo = rs.getString("sGLTranNo");
+            poJSON.put("result", "error");
+           poJSON.put("message", "A record with the same Source Code, Industry, and Category already exists. \n"
+                                    + "Transaction No: " + tranNo + ". \n"
+                                    + "Please check your input or use a different combination.");
+         } else {
+             poJSON.put("result", "success");
+         }
+
+         rs.close();
+         return poJSON;
     }
     
     /**
