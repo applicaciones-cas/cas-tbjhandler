@@ -439,12 +439,14 @@ public class TBJParameter extends Transaction {
             Detail(lnCtr).setEntryNo(lnCtr + 1);
         }
         
-        poJSON = checkDuplicate(Master().getSourceCode(), 
-                                Master().getIndustryID(), 
-                                Master().getCategoryID());
-        
-        if (!"success".equals((String) poJSON.get("result"))) {
-            return poJSON;
+        if (getEditMode() == EditMode.ADDNEW) {
+            poJSON = checkDuplicate(Master().getSourceCode(),
+                    Master().getIndustryID(),
+                    Master().getCategoryID());
+
+            if (!"success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
         }
         
         poJSON.put("result", "success");
