@@ -341,14 +341,12 @@ public class TBJParameter extends Transaction {
         // Begin database transaction
         poGRider.beginTrans("UPDATE STATUS", "Void Transaction", SOURCE_CODE, Master().getTransactionNo());
 
-        poJSON = statusChange(
-                poMaster.getTable(),
-                (String) poMaster.getValue("sTransNox"),
-                remarks,
-                lsStatus,
-                !lbConfirm,
-                true
-        );
+        
+        poJSON = statusChange(poMaster.getTable(), (String) poMaster.getValue("sGLTranNo"), remarks, lsStatus, !lbConfirm, true);
+        if (!"success".equals((String) poJSON.get("result"))) {
+            poGRider.rollbackTrans();
+            return poJSON;
+        }
 
         if (!"success".equals((String) poJSON.get("result"))) {
             poGRider.rollbackTrans();
@@ -446,6 +444,19 @@ public class TBJParameter extends Transaction {
 
             if (!"success".equals((String) poJSON.get("result"))) {
                 return poJSON;
+            }
+        }
+        if(Master().getTransactionStatus().equals(TBJ_Constant.CONFIRMED)){
+            if (poGRider.getUserLevel() <= UserRight.ENCODER) {
+                poJSON = ShowDialogFX.getUserApproval(poGRider);
+                if ("error".equals((String) poJSON.get("result"))) {
+                    return poJSON;
+                }
+                if (Integer.parseInt(poJSON.get("nUserLevl").toString()) <= UserRight.ENCODER) {
+                    poJSON.put("result", "error");
+                    poJSON.put("message", "User is not an authorized approving officer.");
+                    return poJSON;
+                }
             }
         }
         
@@ -782,9 +793,9 @@ public class TBJParameter extends Transaction {
                 + " a.sRemarksx, "
                 + " a.cTranStat, "
                 + " CASE a.cTranStat "
-                + " WHEN '0' THEN 'VOID'" 
-                + " WHEN '1' THEN 'OPEN'" 
-                + " WHEN '2' THEN 'CONFIRMED'" 
+                + " WHEN '0' THEN 'OPEN'" 
+                + " WHEN '1' THEN 'CONFIRMED'" 
+                + " WHEN '3' THEN 'VOID'" 
                 + " ELSE 'UNKNOWN'" 
                 + " END AS status"
                 + " FROM TBJ_Master a "
