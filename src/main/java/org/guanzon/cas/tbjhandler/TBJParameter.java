@@ -1301,7 +1301,7 @@ public class TBJParameter extends Transaction {
 
         Set<String> uniqueSet = new HashSet<>();
 
-        for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+        for (int lnCtr = 0; lnCtr <= getDetailCount()-1; lnCtr++) {
 
             String tableNm = String.valueOf(Detail(lnCtr).getTableNm());
             String accountType = String.valueOf(Detail(lnCtr).getAccountType());
@@ -1314,7 +1314,7 @@ public class TBJParameter extends Transaction {
             // Check duplicate
             if (uniqueSet.contains(key)) {
                 poJSON.put("result", "error");
-                poJSON.put("message", "Duplicate detail found at row: " + lnCtr + 1);
+                poJSON.put("message", "Duplicate detail found at row: " + (lnCtr + 1));
                 return poJSON;
             }
 
