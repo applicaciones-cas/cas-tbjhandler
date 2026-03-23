@@ -9,9 +9,11 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -435,6 +437,7 @@ public class TBJParameter extends Transaction {
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
             Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
             Detail(lnCtr).setEntryNo(lnCtr + 1);
+            System.out.println("EDIT MODE willsave :" + Detail(lnCtr).getEditMode());
         }
         
         if (getEditMode() == EditMode.ADDNEW) {
@@ -460,6 +463,14 @@ public class TBJParameter extends Transaction {
             }
         }
         
+        for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+           System.out.println("DETAILS : \n" + Detail(lnCtr).AccountChart().getDescription() +
+                   "\n " + Detail(lnCtr).getTableNm()+
+                   "\n " + Detail(lnCtr).getDerivedField()  +
+                   "\n " + Detail(lnCtr).isActive()  );
+        }
+        
+       
         poJSON.put("result", "success");
         return poJSON;
         }
@@ -1284,4 +1295,34 @@ public class TBJParameter extends Transaction {
         }
         return formattedFormula;
     } 
+    
+    public JSONObject checkDuplicateDetail() {
+        poJSON = new JSONObject();
+
+        Set<String> uniqueSet = new HashSet<>();
+
+        for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
+
+            String tableNm = String.valueOf(Detail(lnCtr).getTableNm());
+            String accountType = String.valueOf(Detail(lnCtr).getAccountType());
+            String derivedField = String.valueOf(Detail(lnCtr).getDerivedField());
+            String accountNo = String.valueOf(Detail(lnCtr).getAccountNo());
+
+            // Combine all 4 fields as a unique key
+            String key = tableNm + "|" + accountType + "|" + derivedField + "|" + accountNo;
+
+            // Check duplicate
+            if (uniqueSet.contains(key)) {
+                poJSON.put("result", "error");
+                poJSON.put("message", "Duplicate detail found at row: " + lnCtr + 1);
+                return poJSON;
+            }
+
+            uniqueSet.add(key);
+        }
+
+        poJSON.put("result", "success");
+        return poJSON;
+    }
+    
 }
