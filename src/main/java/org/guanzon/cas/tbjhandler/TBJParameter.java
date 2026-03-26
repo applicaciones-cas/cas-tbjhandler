@@ -348,6 +348,13 @@ public class TBJParameter extends Transaction {
                 return poJSON;
             }
         }
+          poJSON = checkDuplicate(Master().getSourceCode(),
+                    Master().getIndustryID(),
+                    Master().getCategoryID(),"3");
+
+            if (!"success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
 
         // Begin database transaction
         poGRider.beginTrans("UPDATE STATUS", "Void Transaction", SOURCE_CODE, Master().getTransactionNo());
@@ -451,7 +458,7 @@ public class TBJParameter extends Transaction {
         if (getEditMode() == EditMode.ADDNEW) {
             poJSON = checkDuplicate(Master().getSourceCode(),
                     Master().getIndustryID(),
-                    Master().getCategoryID(),"0");
+                    Master().getCategoryID(),"1");
 
             if (!"success".equals((String) poJSON.get("result"))) {
                 return poJSON;
@@ -541,11 +548,14 @@ public class TBJParameter extends Transaction {
          System.out.println("SQL EXECUTED: " + lsSQL);
          ResultSet rs = poGRider.executeQuery(lsSQL);
          if (rs.next()) {
-            String tranNo = rs.getString("sGLTranNo");
-            poJSON.put("result", "error");
-           poJSON.put("message", "A record with the same Source Code, Industry, Category and Status already exists. \n"
-                                    + "Transaction No: " + tranNo + ". \n"
-                                    + "Please check your input or use a different combination.");
+             
+             if (fsStatus.equals("1") || fsStatus.equals("3")) {
+                 String tranNo = rs.getString("sGLTranNo");
+                 poJSON.put("result", "error");
+                 poJSON.put("message", "A duplicate record was found with the same Source Code, Industry, Category, and Status.\n"
+                         + "Transaction No: " + tranNo + ".\n"
+                         + "Please review your entries or use a different combination.");
+             }
          } else {
              poJSON.put("result", "success");
          }
