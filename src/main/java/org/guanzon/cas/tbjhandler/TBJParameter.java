@@ -38,6 +38,7 @@ import org.guanzon.appdriver.constant.EditMode;
 import org.guanzon.appdriver.constant.UserRight;
 import org.guanzon.appdriver.iface.GValidator;
 import org.guanzon.cas.parameter.Category;
+import org.guanzon.cas.parameter.Industry;
 import org.guanzon.cas.parameter.TransactionSource;
 import org.guanzon.cas.parameter.TransactionSourceTable;
 import org.guanzon.cas.parameter.services.ParamControllers;
@@ -247,6 +248,14 @@ public class TBJParameter extends Transaction {
                 return poJSON;
             }
         }
+        
+        poJSON = checkDuplicate(Master().getSourceCode(),
+                    Master().getIndustryID(),
+                    Master().getCategoryID(),"1");
+
+            if (!"success".equals((String) poJSON.get("result"))) {
+                return poJSON;
+            }
 
         // Begin database transaction
         poGRider.beginTrans("UPDATE STATUS", "ConfirmTransaction", SOURCE_CODE, Master().getTransactionNo());
@@ -437,13 +446,12 @@ public class TBJParameter extends Transaction {
         for (int lnCtr = 0; lnCtr <= getDetailCount() - 1; lnCtr++) {
             Detail(lnCtr).setTransactionNo(Master().getTransactionNo());
             Detail(lnCtr).setEntryNo(lnCtr + 1);
-            System.out.println("EDIT MODE willsave :" + Detail(lnCtr).getEditMode());
         }
         
         if (getEditMode() == EditMode.ADDNEW) {
             poJSON = checkDuplicate(Master().getSourceCode(),
                     Master().getIndustryID(),
-                    Master().getCategoryID());
+                    Master().getCategoryID(),"0");
 
             if (!"success".equals((String) poJSON.get("result"))) {
                 return poJSON;
@@ -515,25 +523,27 @@ public class TBJParameter extends Transaction {
      *         </ul>
      * @throws SQLException if a database access error occurs while executing the query
      */
-     public JSONObject checkDuplicate(String sSourceCD, String sIndstCde, String sCategrCd) throws SQLException {
+     public JSONObject checkDuplicate(String sSourceCD, String sIndstCde, String sCategrCd,String fsStatus) throws SQLException {
         JSONObject poJSON = new JSONObject();
          
         String lsSQL = " SELECT "
                 + " sGLTranNo," 
                 + " sSourceCD, " 
                 + " sIndstCde, " 
-                + " sCategrCd  " 
+                + " sCategrCd, " 
+                + " cTranStat " 
                 + " FROM TBJ_Master " 
                 + " WHERE sSourceCD = " + SQLUtil.toSQL(sSourceCD)
                 + " AND sIndstCde = " +  SQLUtil.toSQL(sIndstCde)
-                + " AND sCategrCd = " + SQLUtil.toSQL(sCategrCd);
+                + " AND sCategrCd = " + SQLUtil.toSQL(sCategrCd)                
+                + " AND cTranStat = " + SQLUtil.toSQL(fsStatus)  ;
         
          System.out.println("SQL EXECUTED: " + lsSQL);
          ResultSet rs = poGRider.executeQuery(lsSQL);
          if (rs.next()) {
             String tranNo = rs.getString("sGLTranNo");
             poJSON.put("result", "error");
-           poJSON.put("message", "A record with the same Source Code, Industry, and Category already exists. \n"
+           poJSON.put("message", "A record with the same Source Code, Industry, Category and Status already exists. \n"
                                     + "Transaction No: " + tranNo + ". \n"
                                     + "Please check your input or use a different combination.");
          } else {
@@ -615,15 +625,61 @@ public class TBJParameter extends Transaction {
         }
         return poJSON;
     }
+    
+    /**
+     * Performs a search for an Industry (Category) record and updates the
+     * master record if successful.
+     *
+     * <p>
+     * This method uses {@code ParamControllers} to access Industry records and
+     * filters by active status ("1"). If a matching record is found, the
+     * industry's ID is set in the master record.
+     *
+     * @param value the value to search for (code or description)
+     * @param byCode {@code true} to search by code, {@code false} to search by
+     * description
+     * @return a {@link JSONObject} containing the result of the search
+     * operation. The "result" key indicates "success" or "error".
+     * @throws SQLException if a database access error occurs
+     * @throws GuanzonException if the search operation fails or encounters
+     * validation issues
+     * @throws ExceptionInInitializerError if initialization of the controller
+     * fails
+     */
+    public JSONObject SearchIndustry(String value, boolean byCode)
+            throws ExceptionInInitializerError, SQLException, GuanzonException {
+
+        Industry object = new ParamControllers(poGRider, logwrapr).Industry();
+        object.setRecordStatus("1");
+
+        poJSON = object.searchRecord(value, byCode);
+
+        if ("success".equals((String) poJSON.get("result"))) {
+            Master().setIndustryID(object.getModel().getIndustryId());
+        }
+        return poJSON;
+    }
 
     /**
-     * Searches and selects a Category record.
+     * Searches for a Category record under a specific Industry and updates the
+     * master record if found.
      *
-     * @param value search value
-     * @param byCode true if searching by code, false if by description
-     * @return JSONObject result of search operation
-     * @throws SQLException if database error occurs
-     * @throws GuanzonException if search fails
+     * <p>
+     * This method uses {@code ParamControllers} to access Category records
+     * filtered by active status ("1") and the current Industry ID from the
+     * master record. If a matching record is found, the Category ID is set in
+     * the master record.
+     *
+     * @param value the search value (code or description)
+     * @param byCode {@code true} to search by code, {@code false} to search by
+     * description
+     * @return a {@link JSONObject} containing the search result. The "result"
+     * key indicates {@code "success"} or {@code "error"}.
+     * @throws SQLException if a database access error occurs
+     * @throws GuanzonException if the search fails or encounters validation
+     * issues
+     * @throws ExceptionInInitializerError if initialization of the controller
+     * fails
      */
     public JSONObject SearchCategory(String value, boolean byCode)
             throws ExceptionInInitializerError, SQLException, GuanzonException {
@@ -631,7 +687,7 @@ public class TBJParameter extends Transaction {
         Category object = new ParamControllers(poGRider, logwrapr).Category();
         object.setRecordStatus("1");
 
-        poJSON = object.searchRecord(value, byCode);
+        poJSON = object.searchRecord(value, byCode,Master().getIndustryID());
 
         if ("success".equals((String) poJSON.get("result"))) {
             Master().setCategoryID(object.getModel().getCategoryId());
@@ -655,7 +711,7 @@ public class TBJParameter extends Transaction {
         AccountChart object = new CashflowControllers(poGRider, logwrapr).AccountChart();
         object.setRecordStatus("1");
 
-        poJSON = object.searchRecord(value, byCode);
+        poJSON = object.searchRecord(value, byCode, Master().getIndustryID());
 
         if ("success".equals((String) poJSON.get("result"))) {
             Detail(detailRow).setAccountNo(object.getModel().getAccountCode());

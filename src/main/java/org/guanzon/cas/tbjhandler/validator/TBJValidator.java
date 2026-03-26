@@ -130,12 +130,18 @@ public class TBJValidator implements GValidator {
             return poJSON;
         }
 
-        if (poMaster.getCategoryID() == null || poMaster.getCategoryID().isEmpty()) {
+//        if (poMaster.getCategoryID() == null || poMaster.getCategoryID().isEmpty()) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Category is not set.");
+//            return poJSON;
+//        }
+
+
+        if(poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {
             poJSON.put("result", "error");
-            poJSON.put("message", "Category is not set.");
+            poJSON.put("message", "Industry is not set.");
             return poJSON;
         }
-        
        
         String remarks = poMaster.getRemarks();
 
@@ -201,12 +207,16 @@ public class TBJValidator implements GValidator {
             return poJSON;
         }
 
-        if (poMaster.getCategoryID() == null || poMaster.getCategoryID().isEmpty()) {
+//        if (poMaster.getCategoryID() == null || poMaster.getCategoryID().isEmpty()) {
+//            poJSON.put("result", "error");
+//            poJSON.put("message", "Category is not set.");
+//            return poJSON;
+//        }
+        if(poMaster.getIndustryID()== null || poMaster.getIndustryID().isEmpty()) {
             poJSON.put("result", "error");
-            poJSON.put("message", "Category is not set.");
+            poJSON.put("message", "Industry is not set.");
             return poJSON;
         }
-        
        
         String remarks = poMaster.getRemarks();
 
