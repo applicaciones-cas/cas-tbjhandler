@@ -55,7 +55,6 @@ public class Model_TBJ_Master extends Model {
 
             // Assign default values
             poEntity.updateString("cTranStat", TBJ_Constant.OPEN);
-            poEntity.updateObject("sIndstCde", poGRider.getIndustry());
             poEntity.updateObject("sModified", poGRider.getUserID());
             poEntity.updateObject("dModified", SQLUtil.toDate(xsDateShort(poGRider.getServerDate()), SQLUtil.FORMAT_SHORT_DATE));
 
@@ -296,6 +295,26 @@ public class Model_TBJ_Master extends Model {
         } else {
             poTransactionSource.initialize();
             return poTransactionSource;
+        }
+    }
+    
+    public Model_Industry Industry() throws GuanzonException, SQLException {
+        if (!"".equals((String) getValue("sIndstCde"))) {
+            if (poIndustry.getEditMode() == EditMode.READY
+                    && poIndustry.getIndustryId().equals((String) getValue("sIndstCde"))) {
+                return poIndustry;
+            } else {
+                poJSON = poIndustry.openRecord((String) getValue("sIndstCde"));
+                if ("success".equals((String) poJSON.get("result"))) {
+                    return poIndustry;
+                } else {
+                    poIndustry.initialize();
+                    return poIndustry;
+                }
+            }
+        } else {
+            poIndustry.initialize();
+            return poIndustry;
         }
     }
     
