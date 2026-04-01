@@ -1362,6 +1362,55 @@ public class TBJParameter extends Transaction {
         return formattedFormula;
     } 
     
+    /**
+     * Validates duplicate entries within the detail records.
+     *
+     * <p>
+     * <b>Validation Adjustment (April 1, 2026 | Author: Teejei De
+     * Celis):</b><br>
+     * This validation was updated to check duplicates based solely on
+     * <code>accountNo</code> instead of a composite key consisting of
+     * <code>tableNm</code>, <code>accountType</code>,
+     * <code>derivedField</code>, and <code>accountNo</code>.
+     * </p>
+     *
+     * <p>
+     * <b>Previous Behavior:</b><br>
+     * Duplicate detection used a combination of multiple fields to determine
+     * uniqueness per row.
+     * </p>
+     *
+     * <p>
+     * <b>Current Behavior:</b><br>
+     * Each detail row must have a unique <code>accountNo</code>. If the same
+     * account number appears more than once, the method flags it as a
+     * duplicate.
+     * </p>
+     *
+     * <p>
+     * <b>Validation Process:</b>
+     * <ul>
+     * <li>Iterates through all detail records.</li>
+     * <li>Stores each <code>accountNo</code> in a Set.</li>
+     * <li>Checks if the current <code>accountNo</code> already exists.</li>
+     * <li>If duplicate is found, returns an error with the row number.</li>
+     * <li>If no duplicates are found, returns success.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * <b>Return Value:</b><br>
+     * Returns a {@link JSONObject} containing:
+     * <ul>
+     * <li><code>"result"</code> = "success" if no duplicates found</li>
+     * <li><code>"result"</code> = "error" if duplicate exists</li>
+     * <li><code>"message"</code> = descriptive error message with row
+     * number</li>
+     * </ul>
+     * </p>
+     *
+     * @return {@link JSONObject} result of the duplicate validation check
+     */
     public JSONObject checkDuplicateDetail() {
         poJSON = new JSONObject();
 
@@ -1369,14 +1418,16 @@ public class TBJParameter extends Transaction {
 
         for (int lnCtr = 0; lnCtr <= getDetailCount()-1; lnCtr++) {
 
-            String tableNm = String.valueOf(Detail(lnCtr).getTableNm());
-            String accountType = String.valueOf(Detail(lnCtr).getAccountType());
-            String derivedField = String.valueOf(Detail(lnCtr).getDerivedField());
+//            String tableNm = String.valueOf(Detail(lnCtr).getTableNm());
+//            String accountType = String.valueOf(Detail(lnCtr).getAccountType());
+//            String derivedField = String.valueOf(Detail(lnCtr).getDerivedField());
+
+            /*adjustment for the duplicate */
             String accountNo = String.valueOf(Detail(lnCtr).getAccountNo());
 
             // Combine all 4 fields as a unique key
-            String key = tableNm + "|" + accountType + "|" + derivedField + "|" + accountNo;
-
+//            String key = tableNm + "|" + accountType + "|" + derivedField + "|" + accountNo;
+              String key = accountNo;
             // Check duplicate
             if (uniqueSet.contains(key)) {
                 poJSON.put("result", "error");
