@@ -247,6 +247,7 @@ public class TBJParameter extends Transaction {
                 poJSON.put("message", "User is not an authorized approving officer.");
                 return poJSON;
             }
+            setApproving((String) poJSON.get("sUserIDxx"));
         }
         
         poJSON = checkDuplicate(Master().getSourceCode(),
@@ -347,6 +348,7 @@ public class TBJParameter extends Transaction {
                 poJSON.put("message", "User is not an authorized approving officer.");
                 return poJSON;
             }
+            setApproving((String) poJSON.get("sUserIDxx"));
         }
           poJSON = checkDuplicate(Master().getSourceCode(),
                     Master().getIndustryID(),
@@ -475,6 +477,7 @@ public class TBJParameter extends Transaction {
                     poJSON.put("message", "User is not an authorized approving officer.");
                     return poJSON;
                 }
+                setApproving((String) poJSON.get("sUserIDxx"));
             }
         }
         
