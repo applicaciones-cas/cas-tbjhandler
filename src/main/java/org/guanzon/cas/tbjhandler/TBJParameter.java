@@ -1422,7 +1422,7 @@ public class TBJParameter extends Transaction {
         for (int lnCtr = 0; lnCtr <= getDetailCount()-1; lnCtr++) {
 
 //            String tableNm = String.valueOf(Detail(lnCtr).getTableNm());
-            String accountType = String.valueOf(Detail(lnCtr).getAccountType());
+//            String accountType = String.valueOf(Detail(lnCtr).getAccountType());
 //            String derivedField = String.valueOf(Detail(lnCtr).getDerivedField());
 
             /*adjustment for the duplicate */
@@ -1430,7 +1430,7 @@ public class TBJParameter extends Transaction {
 
             // Combine all 4 fields as a unique key
 //            String key = tableNm + "|" + accountType + "|" + derivedField + "|" + accountNo;
-            String key =  accountType + "|"  + accountNo;
+              String key = accountNo;
             // Check duplicate
             if (uniqueSet.contains(key)) {
                 poJSON.put("result", "error");
